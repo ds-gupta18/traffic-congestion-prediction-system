@@ -35,10 +35,18 @@ text-align:center;
 color:#00FFAA;
 font-size:55px;
 margin-top:20px;
-margin-bottom:40px;
+margin-bottom:10px;
 '>
 🚦 Traffic Prediction System
 </h1>
+
+<h3 style='
+text-align:center;
+color:white;
+margin-bottom:40px;
+'>
+Machine Learning Based Traffic Congestion Prediction
+</h3>
 """, unsafe_allow_html=True)
 
 
@@ -46,13 +54,15 @@ margin-bottom:40px;
 
 df = pd.read_csv("Metro_Interstate_Traffic_Volume.csv")
 
-# Preprocessing
+# PREPROCESSING
 df['date_time'] = pd.to_datetime(df['date_time'])
 df['hour'] = df['date_time'].dt.hour
 df['day'] = df['date_time'].dt.dayofweek
+
 df = df.drop(['date_time', 'weather_description'], axis=1)
 
-# Traffic Level
+
+# TRAFFIC LEVEL FUNCTION
 def traffic_level(x):
     if x < 2000:
         return "Low"
@@ -61,26 +71,39 @@ def traffic_level(x):
     else:
         return "High"
 
-df['traffic_level'] = df['traffic_volume'].apply(traffic_level)
 
-# Encoding
+df['traffic_level'] = df['traffic_volume'].apply(
+    traffic_level
+)
+
+# ENCODING
 le_weather = LabelEncoder()
 le_traffic = LabelEncoder()
 
-df['weather_main'] = le_weather.fit_transform(df['weather_main'])
-df['traffic_level'] = le_traffic.fit_transform(df['traffic_level'])
+df['weather_main'] = le_weather.fit_transform(
+    df['weather_main']
+)
+
+df['traffic_level'] = le_traffic.fit_transform(
+    df['traffic_level']
+)
 
 
 # MODEL
 
-X = df[['temp','rain_1h','snow_1h',
-        'clouds_all','weather_main',
-        'hour','day']]
+X = df[
+    ['temp', 'rain_1h', 'snow_1h',
+     'clouds_all', 'weather_main',
+     'hour', 'day']
+]
 
 y = df['traffic_level']
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
 )
 
 model = RandomForestClassifier(
@@ -98,9 +121,11 @@ accuracy = model.score(X_test, y_test)
 st.sidebar.header("⚙️ Enter Details")
 
 temp_celsius = st.sidebar.number_input(
-    "Temperature (°C)"
+    "Temperature (°C)",
+    value=30.0
 )
 
+# Celsius → Kelvin
 temp = temp_celsius + 273.15
 
 rain_option = st.sidebar.selectbox(
@@ -113,6 +138,7 @@ snow_option = st.sidebar.selectbox(
     ["Not Snowing", "Snowing"]
 )
 
+# Convert text to numeric
 rain = 1 if rain_option == "Raining" else 0
 snow = 1 if snow_option == "Snowing" else 0
 
@@ -124,7 +150,9 @@ clouds = st.sidebar.slider(
 
 weather = st.sidebar.selectbox(
     "Weather",
-    ["Clouds","Clear","Rain","Mist","Snow"]
+    ["Clouds", "Clear",
+     "Rain", "Mist",
+     "Snow"]
 )
 
 hour = st.sidebar.slider(
@@ -135,19 +163,25 @@ hour = st.sidebar.slider(
 
 day = st.sidebar.selectbox(
     "Day",
-    ["Monday","Tuesday","Wednesday",
-     "Thursday","Friday",
-     "Saturday","Sunday"]
+    [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+    ]
 )
 
 day_map = {
-    "Monday":0,
-    "Tuesday":1,
-    "Wednesday":2,
-    "Thursday":3,
-    "Friday":4,
-    "Saturday":5,
-    "Sunday":6
+    "Monday": 0,
+    "Tuesday": 1,
+    "Wednesday": 2,
+    "Thursday": 3,
+    "Friday": 4,
+    "Saturday": 5,
+    "Sunday": 6
 }
 
 day = day_map[day]
@@ -166,13 +200,37 @@ if predict_btn:
     )[0]
 
     prediction = model.predict([
-        [temp, rain, snow, clouds,
-         weather_encoded, hour, day]
+        [
+            temp,
+            rain,
+            snow,
+            clouds,
+            weather_encoded,
+            hour,
+            day
+        ]
     ])
 
     result = le_traffic.inverse_transform(
         prediction
     )
+
+    # CONFIDENCE SCORE
+    prediction_proba = model.predict_proba([
+        [
+            temp,
+            rain,
+            snow,
+            clouds,
+            weather_encoded,
+            hour,
+            day
+        ]
+    ])
+
+    confidence = max(
+        prediction_proba[0]
+    ) * 100
 
     st.markdown("""
     <h2 style='
@@ -184,7 +242,8 @@ if predict_btn:
     </h2>
     """, unsafe_allow_html=True)
 
-    # Result Color
+    # RESULT COLORS
+
     if result[0] == "Low":
         bg_color = "#28A745"
         emoji = "🟢"
@@ -197,29 +256,51 @@ if predict_btn:
         bg_color = "#DC3545"
         emoji = "🔴"
 
-    st.markdown(f"""
-    <div style="
-        background-color:{bg_color};
-        padding:30px;
-        border-radius:20px;
-        text-align:center;
-        width:80%;
-        margin:auto;
-        margin-top:20px;
-        box-shadow:0px 0px 20px rgba(255,255,255,0.1);
-    ">
-        <h1 style="
-            color:white;
-            font-size:50px;
-            font-weight:bold;
+    # RESULT BOX
+
+    st.markdown(
+        f"""
+        <div style="
+            background-color:{bg_color};
+            padding:30px;
+            border-radius:20px;
+            text-align:center;
+            width:80%;
+            margin:auto;
+            margin-top:20px;
+            box-shadow:0px 0px 20px rgba(255,255,255,0.1);
         ">
-            {emoji} {result[0]} Traffic
-        </h1>
-    </div>
-    """, unsafe_allow_html=True)
+            <h1 style="
+                color:white;
+                font-size:50px;
+                font-weight:bold;
+            ">
+                {emoji} {result[0]} Traffic
+            </h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # CONFIDENCE SCORE DISPLAY
+
+    st.markdown(
+        f"""
+        <h2 style='
+        text-align:center;
+        color:white;
+        margin-top:20px;
+        font-size:30px;
+        '>
+        🎯 Confidence:
+        {confidence:.2f}%
+        </h2>
+        """,
+        unsafe_allow_html=True
+    )
 
 
-# TRAFFIC GRAPH CARD
+# GRAPH 1
 
 st.markdown("""
 <div class="graph-card">
@@ -236,7 +317,7 @@ hourly_traffic = df.groupby(
 st.line_chart(hourly_traffic)
 
 
-# FEATURE IMPORTANCE CARD
+# GRAPH 2
 
 st.markdown("""
 <div class="graph-card">
@@ -248,7 +329,8 @@ st.markdown("""
 
 importance = pd.DataFrame({
     'Feature': X.columns,
-    'Importance': model.feature_importances_
+    'Importance':
+    model.feature_importances_
 })
 
 importance = importance.sort_values(
@@ -257,20 +339,24 @@ importance = importance.sort_values(
 )
 
 st.bar_chart(
-    importance.set_index('Feature')
+    importance.set_index(
+        'Feature'
+    )
 )
 
 
-# ACCURACY
+# MODEL ACCURACY
 
 st.markdown("---")
 
 st.markdown(
     f"""
-    <h3 style='text-align:center;
-    color:#00FFAA;'>
+    <h3 style='
+    text-align:center;
+    color:#00FFAA;
+    '>
     ✅ Model Accuracy:
-    {accuracy*100:.2f}%
+    {accuracy * 100:.2f}%
     </h3>
     """,
     unsafe_allow_html=True
