@@ -4,24 +4,25 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 
+st.set_page_config(
+    page_title="Traffic Prediction",
+    page_icon="🚦",
+    layout="wide"
+)
+
 
 # PAGE STYLE
 
 st.markdown("""
 <style>
+
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 0rem;
+}
 .stApp {
     background-color: #0E1117;
     color: white;
-}
-
-/* Graph Container */
-.graph-card {
-    background-color: #161B22;
-    padding: 20px;
-    border-radius: 20px;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0px 0px 15px rgba(255,255,255,0.08);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -33,9 +34,9 @@ st.markdown("""
 <h1 style='
 text-align:center;
 color:#00FFAA;
-font-size:55px;
-margin-top:20px;
-margin-bottom:10px;
+font-size:50px;
+margin-top:2px;
+margin-bottom:0px;
 '>
 🚦 Traffic Prediction System
 </h1>
@@ -43,7 +44,7 @@ margin-bottom:10px;
 <h3 style='
 text-align:center;
 color:white;
-margin-bottom:40px;
+margin-bottom:4px;
 '>
 Machine Learning Based Traffic Congestion Prediction
 </h3>
@@ -236,7 +237,7 @@ if predict_btn:
     <h2 style='
     text-align:center;
     color:white;
-    margin-top:20px;
+    margin-top:5px;
     '>
     🚦 Traffic Prediction Result
     </h2>
@@ -262,17 +263,17 @@ if predict_btn:
         f"""
         <div style="
             background-color:{bg_color};
-            padding:30px;
+            padding:8px;
             border-radius:20px;
             text-align:center;
-            width:80%;
+            width:35%;
             margin:auto;
-            margin-top:20px;
+            margin-top:10px;
             box-shadow:0px 0px 20px rgba(255,255,255,0.1);
         ">
             <h1 style="
                 color:white;
-                font-size:50px;
+                font-size:25px;
                 font-weight:bold;
             ">
                 {emoji} {result[0]} Traffic
@@ -286,78 +287,65 @@ if predict_btn:
 
     st.markdown(
         f"""
-        <h2 style='
+        <h3 style='
         text-align:center;
         color:white;
-        margin-top:20px;
-        font-size:30px;
+        margin-top:2px;
+        margin-bottom:0px;
+        font-size:24px;
         '>
         🎯 Confidence:
         {confidence:.2f}%
-        </h2>
+        </h3>
         """,
         unsafe_allow_html=True
     )
 
+    col1, col2 = st.columns(2)
 
-# GRAPH 1
+    # GRAPH 1
+    with col1:
+        st.subheader("📈 Average Traffic by Hour")
 
-st.markdown("""
-<div class="graph-card">
-<h2 style="text-align:center;">
-📈 Average Traffic by Hour
-</h2>
-</div>
-""", unsafe_allow_html=True)
+        hourly_traffic = df.groupby(
+            'hour'
+        )['traffic_volume'].mean()
 
-hourly_traffic = df.groupby(
-    'hour'
-)['traffic_volume'].mean()
-
-st.line_chart(hourly_traffic)
+        st.line_chart(hourly_traffic)
 
 
-# GRAPH 2
+    # GRAPH 2
+    with col2:
+        st.subheader("📊 Feature Importance")
 
-st.markdown("""
-<div class="graph-card">
-<h2 style="text-align:center;">
-📊 Feature Importance
-</h2>
-</div>
-""", unsafe_allow_html=True)
+        importance = pd.DataFrame({
+            'Feature': X.columns,
+            'Importance':
+            model.feature_importances_
+        })
 
-importance = pd.DataFrame({
-    'Feature': X.columns,
-    'Importance':
-    model.feature_importances_
-})
+        importance = importance.sort_values(by='Importance', ascending=False
+        )
 
-importance = importance.sort_values(
-    by='Importance',
-    ascending=False
-)
-
-st.bar_chart(
-    importance.set_index(
-        'Feature'
-    )
-)
+        st.bar_chart(
+            importance.set_index('Feature')
+        )
 
 
 # MODEL ACCURACY
 
-st.markdown("---")
+    st.markdown("<br>", unsafe_allow_html=True)
 
-st.markdown(
-    f"""
-    <h3 style='
-    text-align:center;
-    color:#00FFAA;
-    '>
-    ✅ Model Accuracy:
-    {accuracy * 100:.2f}%
-    </h3>
-    """,
-    unsafe_allow_html=True
-)
+    st.markdown(
+        f"""
+        <h3 style='
+        text-align:center;
+        color:#00FFAA;
+        margin-top:-10px;
+        '>
+        ✅ Model Accuracy:
+        {accuracy * 100:.2f}%
+        </h3>
+        """,
+        unsafe_allow_html=True
+    )
